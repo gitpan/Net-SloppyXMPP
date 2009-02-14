@@ -7,7 +7,7 @@ use IO::Socket::INET;
 use XML::Simple;
 use Data::Dumper;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 NAME
 
@@ -69,8 +69,16 @@ available on CPAN.  Some examples: L<Net::XMPP> and L<AnyEvent::XMPP>.
     resource => 'yourresourcename', # or don't set and a default will be supplied
     initialpresence => 'available', # available, busy, dnd, defaults to available
     initialstatus => 'I am alive!', # defaults to ''
+    message_callback => \&messageCallback,
   );
   die qq(XMPP didn't create.\n) unless $xmpp;
+
+  sub messageCallback
+  {
+    my $xmpp = shift;
+    my $data = shift;
+    print Dumper($data);
+  }
 
   my $xmppConnect = $xmpp->connect;
   die qq(XMPP didn't connect.\n) unless $xmppConnect;
@@ -182,6 +190,12 @@ If you don't know what this is, you probably don't need to set it.
 In the JID C<fred@yourdomain.xyz/Office>, the resource is C<Office>.
 A default is provided if you don't set it.
 
+=item message_callback
+
+The function or code that you want to run on each incoming message.
+Must be a coderef.
+A default (NOOP with complaint) provided if you don't set it.
+
 =item debug
 
 The debug level.
@@ -236,6 +250,20 @@ sub new
   $self->{tickdelay} = int((defined($args{tickdelay}) ? $args{tickdelay} : 0.5) * 100) / 100 || 0.5;
   $self->{tick_callback} = sub { $self->debug(0, __PACKAGE__." has no tick callback."); };
 
+  $self->{message_callback} = sub { $self->debug(0, __PACKAGE__." has no message callback."); };
+  if (defined($args{message_callback}))
+  {
+    if (ref($args{message_callback}) eq 'CODE')
+    {
+      $self->{message_callback} = $args{message_callback};
+    }
+    else
+    {
+      $self->debug(0, __PACKAGE__."->new message_callback must be coderef.");
+      return 0;
+    }
+  }
+
   @{$self->{write_queue}} = ();
   @{$self->{read_queue}} = ();
   $self->{read_buffer} = '';
@@ -248,6 +276,7 @@ sub new
   {
     require Megagram::ResolveSRV;
     import Megagram::ResolveSRV;
+    $self->{rsrv} = Megagram::ResolveSRV->new;
   }
 
   if ($self->{usetls})
@@ -326,8 +355,6 @@ sub new
   $self->{sessionstarted} = 0;
 
   @{$self->{roster}} = ();
-
-  $self->{rsrv} = Megagram::ResolveSRV->new;
 
   return $self;
 }
@@ -583,6 +610,42 @@ sub tick
   $self->process_read_buffer if length($self->{read_buffer});
   $self->process_read_queue if $self->readable;
   $self->socket_write;
+}
+
+=head2 message
+
+  $xmpp->message({
+    to => 'fred@fakedomain.xyz',
+    message => 'This is a message.',
+  });
+
+  $xmpp->message({
+    to => [
+      'fred@fakedomain.xyz',
+      'jane@fakedomain.xyz',
+    ],
+    message => 'This is a message.',
+  });
+
+Sends a message to an XMPP user.
+If C<to> is an arrayref, it will send to multiple parties.
+
+=cut
+
+sub message
+{
+  my $self = shift;
+  my $data = shift;
+
+  (my $message = $data->{message}) =~ s/(.)/sprintf('&#x%02X;', ord($1))/eg;
+  my @to = ((ref($data->{to}) eq 'ARRAY') ? @{$data->{to}} : ($data->{to}));
+
+  foreach my $to (@to)
+  {
+    $self->debug(5, qq(Message send to [$to] message [$message]));
+    $to =~ s/[<>"']//g;
+    $self->write(qq(<message to="$to"><body>$message</body></message>));
+  }
 }
 
 =head2 write
@@ -1161,6 +1224,8 @@ From: $data->{from}
 Body: $data->{body}
 ---------------
 XYZ
+
+  &{$self->{message_callback}}($self, $data);
 }
 
 =head2 roster
@@ -1252,7 +1317,7 @@ I'll be very happy to merge it in.  If it doesn't fit the goal, I won't, even if
 
 =item *
 
-This is version 0.1 of a module called SloppyXMPP.  If you don't hit any bugs, you might want to try
+This is version 0.2 of a module called SloppyXMPP.  If you don't hit any bugs, you might want to try
 your luck at the lottery today.
 
 =item *
