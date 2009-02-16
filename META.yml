@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Net-SloppyXMPP
-version:             0.02
+version:             0.03
 abstract:            A rather sloppy XMPP client implementation
 license:             ~
 author:              

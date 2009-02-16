@@ -1,5 +1,9 @@
 Revision history for Perl extension Net::SloppyXMPP.
 
+0.03  Sun Feb 15 18:36:00 2009
+  - Fixed "message" chunking and encoding issue.
+    - Large messages would not pass correctly.
+
 0.02  Sat Feb 14 17:11:00 2009
 	- Added "message" function.
 	- Added "message_callback" to "new".

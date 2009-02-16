@@ -5,5 +5,4 @@ README
 README.html
 t/Net-SloppyXMPP.t
 lib/Net/SloppyXMPP.pm
-examples/example.pl
 META.yml                                 Module meta-data (added by MakeMaker)

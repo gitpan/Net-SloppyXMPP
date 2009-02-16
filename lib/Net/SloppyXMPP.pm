@@ -7,7 +7,7 @@ use IO::Socket::INET;
 use XML::Simple;
 use Data::Dumper;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 NAME
 
@@ -637,14 +637,19 @@ sub message
   my $self = shift;
   my $data = shift;
 
-  (my $message = $data->{message}) =~ s/(.)/sprintf('&#x%02X;', ord($1))/eg;
   my @to = ((ref($data->{to}) eq 'ARRAY') ? @{$data->{to}} : ($data->{to}));
 
   foreach my $to (@to)
   {
-    $self->debug(5, qq(Message send to [$to] message [$message]));
     $to =~ s/[<>"']//g;
-    $self->write(qq(<message to="$to"><body>$message</body></message>));
+
+    my $message = XMLout({
+      to => $to,
+      body => ["$data->{message}"],
+    }, RootName => 'message');
+
+    $self->debug(5, qq(Message send to [$to] message [$message]));
+    $self->write($message);
   }
 }
 
@@ -728,13 +733,15 @@ sub socket_write
   {
     $data = encode_utf8($data);
 
-    $self->debug(3, "SOCKET_WRITE-1: [$data]");
+    $self->debug(4, "SOCKET_WRITE-1: [$data]");
 
     while ($data)
     {
       my $data_to_write = (($start_pos <= length($data)) ? substr($data, $start_pos, $self->{socket_write_len}) : '');
       my $data_to_write_len = length($data_to_write);
       last unless $data_to_write_len;
+
+      $self->debug(3, "SOCKET_WRITE-CHUNK: [$data_to_write_len] [$data_to_write]");
 
       my $data_written_len = 0;
 
@@ -1317,7 +1324,7 @@ I'll be very happy to merge it in.  If it doesn't fit the goal, I won't, even if
 
 =item *
 
-This is version 0.2 of a module called SloppyXMPP.  If you don't hit any bugs, you might want to try
+This is version 0.3 of a module called SloppyXMPP.  If you don't hit any bugs, you might want to try
 your luck at the lottery today.
 
 =item *
