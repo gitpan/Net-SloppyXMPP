@@ -1,5 +1,9 @@
 Revision history for Perl extension Net::SloppyXMPP.
 
+0.04  Mon Feb 16 00:55:00 2009
+  - Added "ping" and "pong".
+    - Also added attribute "pingfreq" for "new".
+
 0.03  Sun Feb 15 18:36:00 2009
   - Fixed "message" chunking and encoding issue.
     - Large messages would not pass correctly.

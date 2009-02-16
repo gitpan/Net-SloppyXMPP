@@ -7,7 +7,7 @@ use IO::Socket::INET;
 use XML::Simple;
 use Data::Dumper;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 NAME
 
@@ -235,6 +235,13 @@ If you don't know what this is for, don't mess with it.
 Sets the amount to read from the socket at one time.
 Default is C<4096>.
 
+=item pingfreq
+
+If you don't know what this is for, don't mess with it.
+Sets the number of seconds between automatic pings.
+Set it to C<0> if you wish to disable it.
+Default is C<300> seconds (5 minutes).
+
 =back
 
 =cut
@@ -249,6 +256,9 @@ sub new
 
   $self->{tickdelay} = int((defined($args{tickdelay}) ? $args{tickdelay} : 0.5) * 100) / 100 || 0.5;
   $self->{tick_callback} = sub { $self->debug(0, __PACKAGE__." has no tick callback."); };
+
+  $self->{pingtimer} = time();
+  $self->{pingfreq} = (defined($args{pingfreq}) ? abs($args{pingfreq}) : 300);
 
   $self->{message_callback} = sub { $self->debug(0, __PACKAGE__." has no message callback."); };
   if (defined($args{message_callback}))
@@ -606,6 +616,7 @@ sub tick
 {
   my $self = shift;
 
+  $self->ping if (($self->{pingfreq} > 0) && ($self->ready) && (time() - $self->{pingtimer} > $self->{pingfreq}));
   $self->socket_read;
   $self->process_read_buffer if length($self->{read_buffer});
   $self->process_read_queue if $self->readable;
@@ -949,6 +960,11 @@ sub process_read_queue
         $self->presence($self->{initialpresence}, $self->{initialstatus});
         $self->rosterreceived($data->{iq}->{query});
       }
+      elsif (defined($data->{iq}->{ping}))
+      {
+        $self->debug(3, "PRQ: PING IQ RECEIVED");
+        $self->pong($data->{iq});
+      }
     }
     elsif (defined($data->{message}))
     {
@@ -1291,6 +1307,40 @@ sub rosterreceived
   $self->debug(3, Dumper($self->{roster}));
 }
 
+=head2 ping
+
+Used internally.
+B<Don't use it yourself.>
+Sends a ping to the server.
+
+=cut
+
+sub ping
+{
+  my $self = shift;
+  my $id = 'ping'.int(rand() * 100000);
+  $self->write(qq(<iq from='$self->{jid}' to='$self->{domain}' id='$id' type='get'><ping xmlns='urn:xmpp:ping'/></iq>));
+  $self->{pingtimer} = time();
+}
+
+=head2 pong
+
+Used internally.
+B<Don't use it yourself.>
+Sends a pong (ping response) to the server.
+
+=cut
+
+sub pong
+{
+  my $self = shift;
+  my $data = shift;
+  my $from = $data->{from};
+  my $id = $data->{id};
+  $self->write(qq(<iq from='$self->{jid}' to='$from' id='$id' type='result'/>));
+  $self->{pingtimer} = time();
+}
+
 =head1 TODO
 
 =over
@@ -1324,7 +1374,7 @@ I'll be very happy to merge it in.  If it doesn't fit the goal, I won't, even if
 
 =item *
 
-This is version 0.3 of a module called SloppyXMPP.  If you don't hit any bugs, you might want to try
+This is version 0.04 of a module called SloppyXMPP.  If you don't hit any bugs, you might want to try
 your luck at the lottery today.
 
 =item *
