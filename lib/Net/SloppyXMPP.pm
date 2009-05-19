@@ -7,7 +7,7 @@ use IO::Socket::INET;
 use XML::Simple;
 use Data::Dumper;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 =head1 NAME
 
@@ -854,7 +854,7 @@ sub process_read_buffer
 
   $self->{read_buffer} =~ s#^\s*(<\s*([a-z0-9\-_]+)\s*\b[^>]*?\s*)/>#$1></$2>#i; # convert self-closing first tag to empty non-self-closing tag, to prep for next regex
 
-  if ($self->{read_buffer} =~ s#^\s*(<\s*([a-z0-9\-_]+)\s*\b.*?</\s*\2\s*>)##i)
+  while ($self->{read_buffer} =~ s#^\s*(<\s*([a-z0-9\-_]+)\s*\b.*?</\s*\2\s*>)##is)
   {
     my $section = $1;
     my $opentag = $2;
