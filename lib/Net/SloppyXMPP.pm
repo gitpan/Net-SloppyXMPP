@@ -7,7 +7,7 @@ use IO::Socket::INET;
 use XML::Simple;
 use Data::Dumper;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 NAME
 
@@ -656,6 +656,7 @@ sub message
 
     my $message = XMLout({
       to => $to,
+      type => 'normal',
       body => ["$data->{message}"],
     }, RootName => 'message');
 

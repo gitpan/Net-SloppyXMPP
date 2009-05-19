@@ -1,17 +1,25 @@
 --- #YAML:1.0
-name:                Net-SloppyXMPP
-version:             0.04
-abstract:            A rather sloppy XMPP client implementation
-license:             ~
-author:              
+name:               Net-SloppyXMPP
+version:            0.05
+abstract:           A rather sloppy XMPP client implementation
+author:
     - Dusty Wilson <dusty_-_at_-_megagram_-_com>
-generated_by:        ExtUtils::MakeMaker version 6.42
-distribution_type:   module
-requires:     
-    Data::Dumper:                  0
-    Encode:                        0
-    IO::Socket::INET:              0
-    XML::Simple:                   0
+license:            unknown
+distribution_type:  module
+configure_requires:
+    ExtUtils::MakeMaker:  0
+build_requires:
+    ExtUtils::MakeMaker:  0
+requires:
+    Data::Dumper:      0
+    Encode:            0
+    IO::Socket::INET:  0
+    XML::Simple:       0
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version 6.50
 meta-spec:
-    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
-    version: 1.3
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4

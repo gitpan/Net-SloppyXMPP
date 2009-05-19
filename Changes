@@ -1,5 +1,9 @@
 Revision history for Perl extension Net::SloppyXMPP.
 
+0.05  Tue May 19 03:59:00 2009
+  - Added type="normal" to outgoing message.
+    - "type" was previously not set.
+
 0.04  Mon Feb 16 00:55:00 2009
   - Added "ping" and "pong".
     - Also added attribute "pingfreq" for "new".
